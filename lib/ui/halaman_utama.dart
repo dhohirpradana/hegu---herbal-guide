@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hegu/ui/page_content_home/dokter_page.dart';
 import 'package:hegu/ui/page_content_home/map.dart';
@@ -22,22 +23,30 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     });
   }
 
-  String username = "", nama = "", foto = "";
+  String username = "", namanya = "", nama = "", foto = "", level = "";
 
   getPref() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     setState(() {
       foto = preferences.getString("foto");
       username = preferences.getString("username");
-      nama = preferences.getString("nama");
+      namanya = preferences.getString("nama");
+      level = preferences.getString("level");
     });
+    nama = (level == "3")
+        ? "$namanya (admin)"
+        : (level == "2") ? "$namanya (dokter)" : nama = "$namanya (>__<)";
+    print("nama: $nama");
   }
 
   @override
   void initState() {
     super.initState();
+    isLogout = false;
     getPref();
   }
+
+  bool isLogout = false;
 
   DateTime backbuttonpressedTime;
   Widget halaman = Tanaman();
@@ -50,44 +59,130 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     return Scaffold(
         resizeToAvoidBottomPadding: false,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           actions: <Widget>[
             Container(
               margin: EdgeInsets.only(right: 7),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  SizedBox(
-                    height: 50,
-                    width: 50,
-                    child: CircleAvatar(
-                      radius: 30.0,
-                      backgroundImage: NetworkImage(
-                          'http://hegumk.000webhostapp.com/image/$foto'),
-                      backgroundColor: Colors.transparent,
+                  GestureDetector(
+                    onTap: () {
+                      showDialog(
+                          barrierDismissible: true,
+                          context: context,
+                          builder: (BuildContext context) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: <Widget>[
+                                AlertDialog(
+                                  content: Column(
+                                    children: <Widget>[
+                                      Container(
+                                        height:
+                                            MediaQuery.of(context).size.width *
+                                                1 /
+                                                2,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                1 /
+                                                2,
+                                        margin:
+                                            EdgeInsets.fromLTRB(0, 0, 5, 10),
+                                        child: CachedNetworkImage(
+                                          imageUrl:
+                                              'http://hegumk.000webhostapp.com/image/$foto',
+                                          imageBuilder:
+                                              (context, imageProvider) =>
+                                                  Container(
+                                            decoration: BoxDecoration(
+                                                borderRadius:
+                                                    BorderRadius.circular(30),
+                                                image: DecorationImage(
+                                                    image: imageProvider,
+                                                    fit: BoxFit.cover,
+                                                    colorFilter:
+                                                        ColorFilter.mode(
+                                                            Colors.grey,
+                                                            BlendMode
+                                                                .colorBurn))),
+                                          ),
+                                          placeholder: (context, url) =>
+                                              CircularProgressIndicator(),
+                                          errorWidget: (context, url, error) =>
+                                              Icon(Icons.error),
+                                        ),
+                                      ),
+                                      Text(
+                                        nama,
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold),
+                                      )
+                                    ],
+                                  ),
+                                  actions: <Widget>[
+                                    Row(
+                                      children: <Widget>[
+                                        GestureDetector(
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text("Tutup",
+                                                style: TextStyle(
+                                                    color: Colors.red[400],
+                                                    fontSize: 16))),
+                                        SizedBox(
+                                          width: 15,
+                                        ),
+                                        GestureDetector(
+                                            onTap: () {
+                                              signOut();
+                                              Navigator.pop(context);
+                                            },
+                                            child: Text(
+                                              "Logout",
+                                              style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold),
+                                            )),
+                                        SizedBox(
+                                          width: 25,
+                                        )
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ],
+                            );
+                          });
+                    },
+                    child: Container(
+                      height: 50,
+                      width: 50,
+                      margin: EdgeInsets.fromLTRB(0, 0, 2, 0),
+                      child: CachedNetworkImage(
+                        imageUrl: 'http://hegumk.000webhostapp.com/image/$foto',
+                        imageBuilder: (context, imageProvider) => Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover,
+                                  colorFilter: ColorFilter.mode(
+                                      Colors.grey, BlendMode.colorBurn))),
+                        ),
+                        placeholder: (context, url) =>
+                            CircularProgressIndicator(),
+                        errorWidget: (context, url, error) => Icon(Icons.error),
+                      ),
                     ),
                   ),
-                  // Text(
-                  //   "$nama",
-                  //   style: TextStyle(fontSize: 13),
-                  // ),
-
-                  // //
-                  // Row(
-                  //   children: <Widget>[
-                  //     Text("(", style: TextStyle(fontSize: 12)),
-                  //     InkWell(
-                  //       onTap: () {
-                  //         signOut();
-                  //       },
-                  //       child: Text("Keluar",
-                  //           style: TextStyle(
-                  //             fontSize: 13,
-                  //             color: Colors.red,
-                  //           )),
-                  //     ),
-                  //     Text(")", style: TextStyle(fontSize: 12)),
-                  //   ],
-                  // )
+                  SizedBox(
+                    width: 2,
+                  ),
                 ],
               ),
             )
@@ -123,7 +218,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           ),
         ),
         bottomNavigationBar: CurvedNavigationBar(
-          color: colorNavBar,
+          color: Colors.white,
           backgroundColor: color,
           items: <Widget>[
             Image.asset(
@@ -156,8 +251,9 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           },
         ),
         body: WillPopScope(
-            onWillPop: onWillPop,
-            child: Container(color: color, child: Center(child: halaman))));
+          onWillPop: onWillPop,
+          child: Container(color: color, child: Center(child: halaman)),
+        ));
   }
 
   Future<bool> onWillPop() async {

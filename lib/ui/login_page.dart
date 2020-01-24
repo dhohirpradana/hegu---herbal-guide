@@ -63,56 +63,102 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   login() async {
+    final response = await http
+        .post(BaseUrl.login, body: {"username": email, "password": password});
+    final data = jsonDecode(response.body);
     try {
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        final response = await http.post(BaseUrl.login,
-            body: {"username": email, "password": password});
-        final data = jsonDecode(response.body);
-        int value = data['value'];
-        String levelUser = data['levelUser'];
-        String foto = data['foto'];
-        String usernameAPI = data['username'];
-        String namaAPI = data['nama'];
-        String pesan = data['message'];
-        if (value == 1) {
-          if (levelUser == "1" || levelUser == "2" || levelUser == "3") {
-            Flushbar(
-              flushbarStyle: FlushbarStyle.FLOATING,
-              reverseAnimationCurve: Curves.decelerate,
-              forwardAnimationCurve: Curves.elasticOut,
-              boxShadows: [
-                BoxShadow(
-                    color: Colors.grey[800],
-                    offset: Offset(0.0, 2.0),
-                    blurRadius: 3.0)
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            child: new Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                    margin: EdgeInsets.all(10),
+                    child: new CircularProgressIndicator()),
+                new Text("Tunggu..."),
               ],
-              isDismissible: false,
-              icon: Icon(
-                Icons.near_me,
-                color: Colors.white,
-              ),
-              // showProgressIndicator: true,
-              // progressIndicatorBackgroundColor: Colors.blueGrey,
-              barBlur: 0.0,
-              message: "Sedang masuk...",
-              backgroundColor: Colors.black87,
-              duration: Duration(seconds: 3),
-            )..show(context);
-            print(usernameAPI);
-            print(namaAPI);
-            print(levelUser);
-            print(foto);
-            // print("Tidak ada koneksi");
-            var duration = const Duration(seconds: 3);
-            return Timer(duration, () {
-              print(pesan);
-              setState(() {
-                _loginStatus = LoginStatus.signIn;
-                savePref(value, usernameAPI, namaAPI, levelUser, foto);
+            ),
+          );
+        },
+      );
+      final result = await InternetAddress.lookup('google.com');
+      new Future.delayed(new Duration(seconds: 2), () {
+        Navigator.pop(context);
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          int value = data['value'];
+          String levelUser = data['levelUser'];
+          String foto = data['foto'];
+          String usernameAPI = data['username'];
+          String namaAPI = data['nama'];
+          String pesan = data['message'];
+          String id = data['id'];
+          if (value == 1) {
+            if (levelUser == "1" || levelUser == "2" || levelUser == "3") {
+              Flushbar(
+                flushbarStyle: FlushbarStyle.FLOATING,
+                reverseAnimationCurve: Curves.decelerate,
+                forwardAnimationCurve: Curves.elasticOut,
+                boxShadows: [
+                  BoxShadow(
+                      color: Colors.grey[800],
+                      offset: Offset(0.0, 2.0),
+                      blurRadius: 3.0)
+                ],
+                isDismissible: false,
+                icon: Icon(
+                  Icons.near_me,
+                  color: Colors.white,
+                ),
+                // showProgressIndicator: true,
+                // progressIndicatorBackgroundColor: Colors.blueGrey,
+                barBlur: 0.0,
+                message: "Sedang masuk...",
+                backgroundColor: Colors.black87,
+                duration: Duration(seconds: 1),
+              )..show(context);
+              print(usernameAPI);
+              print(namaAPI);
+              print(levelUser);
+              print(foto);
+              print(id);
+              // print("Tidak ada koneksi");
+              var duration = const Duration(seconds: 3);
+              return Timer(duration, () {
+                print(pesan);
+                setState(() {
+                  _loginStatus = LoginStatus.signIn;
+                  savePref(value, usernameAPI, namaAPI, levelUser, foto, id);
+                });
               });
-            });
-          } else {
+            } else {
+              Flushbar(
+                flushbarPosition: FlushbarPosition.TOP,
+                flushbarStyle: FlushbarStyle.FLOATING,
+                reverseAnimationCurve: Curves.decelerate,
+                forwardAnimationCurve: Curves.elasticOut,
+                boxShadows: [
+                  BoxShadow(
+                      color: Colors.grey[800],
+                      offset: Offset(0.0, 2.0),
+                      blurRadius: 3.0)
+                ],
+                backgroundGradient: LinearGradient(
+                    colors: [Colors.blueGrey[600], Colors.black54]),
+                isDismissible: false,
+                icon: Icon(Icons.check_circle, color: Colors.red[700]),
+                barBlur: 0.0,
+                message: "Akun anda belum diverifikasi\n$email = level 0",
+                backgroundColor: Colors.red[300],
+                duration: Duration(seconds: 3),
+              )..show(context);
+              // print("Tidak ada koneksi");
+              print(pesan);
+              print("Akun anda belum diverifikasi\n$email = level 0");
+            }
+          } else if (value == 0) {
             Flushbar(
               flushbarPosition: FlushbarPosition.TOP,
               flushbarStyle: FlushbarStyle.FLOATING,
@@ -127,45 +173,21 @@ class _LoginPageState extends State<LoginPage> {
               backgroundGradient: LinearGradient(
                   colors: [Colors.blueGrey[600], Colors.black54]),
               isDismissible: false,
-              icon: Icon(Icons.check_circle, color: Colors.red[700]),
+              icon: Icon(
+                Icons.alternate_email,
+                color: Colors.amber,
+              ),
               barBlur: 0.0,
-              message: "Akun anda belum diverifikasi\n$email = level 0",
+              message: "Email atau password salah",
               backgroundColor: Colors.red[300],
               duration: Duration(seconds: 3),
             )..show(context);
             // print("Tidak ada koneksi");
             print(pesan);
-            print("Akun anda belum diverifikasi\n$email = level 0");
+            print("Email atau password salah");
           }
-        } else if (value == 0) {
-          Flushbar(
-            flushbarPosition: FlushbarPosition.TOP,
-            flushbarStyle: FlushbarStyle.FLOATING,
-            reverseAnimationCurve: Curves.decelerate,
-            forwardAnimationCurve: Curves.elasticOut,
-            boxShadows: [
-              BoxShadow(
-                  color: Colors.grey[800],
-                  offset: Offset(0.0, 2.0),
-                  blurRadius: 3.0)
-            ],
-            backgroundGradient:
-                LinearGradient(colors: [Colors.blueGrey[600], Colors.black54]),
-            isDismissible: false,
-            icon: Icon(
-              Icons.alternate_email,
-              color: Colors.amber,
-            ),
-            barBlur: 0.0,
-            message: "Email atau password salah",
-            backgroundColor: Colors.red[300],
-            duration: Duration(seconds: 3),
-          )..show(context);
-          // print("Tidak ada koneksi");
-          print(pesan);
-          print("Email atau password salah");
         }
-      }
+      });
     } on SocketException catch (_) {
       Flushbar(
         flushbarStyle: FlushbarStyle.FLOATING,
@@ -204,8 +226,8 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  savePref(int value, String username, String nama, String level,
-      String foto) async {
+  savePref(int value, String username, String nama, String level, String foto,
+      String id) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     setState(() {
       preferences.setInt("value", value);
@@ -213,6 +235,7 @@ class _LoginPageState extends State<LoginPage> {
       preferences.setString("username", username);
       preferences.setString("nama", nama);
       preferences.setString("foto", foto);
+      preferences.setString("id", id);
     });
   }
 
@@ -476,8 +499,7 @@ class _LoginPageState extends State<LoginPage> {
         );
         break;
       case LoginStatus.signIn:
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => HalamanUtama(signOut)));
+        return HalamanUtama(signOut);
         break;
     }
   }

@@ -35,7 +35,7 @@ class _RegisterPage extends State<RegisterPage> {
     final title = random.toString();
 
     Img.Image image = Img.decodeImage(imageFile.readAsBytesSync());
-    Img.Image smallerImg = Img.copyResize(image, width: 500);
+    Img.Image smallerImg = Img.copyResize(image, width: 1000);
 
     var compressImage = await File("$path/FromGallery_$title.jpg")
       ..writeAsBytesSync(Img.encodeJpg(smallerImg, quality: 85));
@@ -57,7 +57,7 @@ class _RegisterPage extends State<RegisterPage> {
     final title = random.toString();
 
     Img.Image image = Img.decodeImage(imageFile.readAsBytesSync());
-    Img.Image smallerImg = Img.copyResize(image, width: 500);
+    Img.Image smallerImg = Img.copyResize(image, width: 1000);
 
     var compressImage = await File("$path/FromCamera_$title.jpg")
       ..writeAsBytesSync(Img.encodeJpg(smallerImg, quality: 85));
@@ -121,51 +121,71 @@ class _RegisterPage extends State<RegisterPage> {
     request.fields['telp'] = txtTelp.text;
     request.files.add(multipartFile);
 
+    var response = await request.send();
     try {
-      var response = await request.send();
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        if (response.statusCode == 200) {
-          setState(() {
-            txtNama.text = "";
-            txtPassword.text = "";
-            txtEmail.text = "";
-            txtNik.text = "";
-            txtTelp.text = "";
-            _image = null;
-            Flushbar(
-              flushbarPosition: FlushbarPosition.TOP,
-              flushbarStyle: FlushbarStyle.FLOATING,
-              reverseAnimationCurve: Curves.decelerate,
-              forwardAnimationCurve: Curves.elasticOut,
-              boxShadows: [
-                BoxShadow(
-                    color: Colors.grey[800],
-                    offset: Offset(0.0, 2.0),
-                    blurRadius: 3.0)
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Dialog(
+            child: new Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                    margin: EdgeInsets.all(5),
+                    child: new CircularProgressIndicator()),
+                new Text("Tunggu..."),
               ],
-              backgroundGradient: LinearGradient(
-                  colors: [Colors.blueGrey[600], Colors.black54]),
-              isDismissible: false,
-              icon: Icon(Icons.check, color: Colors.blue[600]),
-              barBlur: 0.0,
-              message: "Registrasi berhasil",
-              backgroundColor: Colors.red[300],
-              duration: Duration(seconds: 3),
-            )..show(context);
-            var duration = const Duration(seconds: 2);
-            return Timer(duration, () {
-              setState(() {
-                Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => LoginPage()));
+            ),
+          );
+        },
+      );
+      final result = await InternetAddress.lookup('google.com');
+      new Future.delayed(new Duration(seconds: 2), () {
+        Navigator.pop(context);
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          if (response.statusCode == 200) {
+            setState(() {
+              txtNama.text = "";
+              txtPassword.text = "";
+              txtEmail.text = "";
+              txtNik.text = "";
+              txtTelp.text = "";
+              _image = null;
+              Flushbar(
+                flushbarPosition: FlushbarPosition.TOP,
+                flushbarStyle: FlushbarStyle.FLOATING,
+                reverseAnimationCurve: Curves.decelerate,
+                forwardAnimationCurve: Curves.elasticOut,
+                boxShadows: [
+                  BoxShadow(
+                      color: Colors.grey[800],
+                      offset: Offset(0.0, 2.0),
+                      blurRadius: 3.0)
+                ],
+                backgroundGradient: LinearGradient(
+                    colors: [Colors.blueGrey[600], Colors.black54]),
+                isDismissible: false,
+                icon: Icon(Icons.check, color: Colors.blue[600]),
+                barBlur: 0.0,
+                message: "Registrasi berhasil",
+                backgroundColor: Colors.red[300],
+                duration: Duration(seconds: 2),
+              )..show(context);
+              var duration = const Duration(seconds: 2);
+              return Timer(duration, () {
+                setState(() {
+                  Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => LoginPage()));
+                });
+                print("Register Berhasil");
               });
-              print("Register Berhasil");
             });
-          });
-        } else {
-          print("Gagal Register");
+          } else {
+            print("Gagal Register");
+          }
         }
-      }
+      });
     } on SocketException catch (_) {
       Flushbar(
         flushbarStyle: FlushbarStyle.FLOATING,
@@ -187,7 +207,7 @@ class _RegisterPage extends State<RegisterPage> {
         barBlur: 0.0,
         message: "Tidak ada koneksi internet",
         backgroundColor: Colors.black87,
-        duration: Duration(seconds: 2),
+        duration: Duration(seconds: 3),
       )..show(context);
       print("Tidak ada koneksi");
     }
